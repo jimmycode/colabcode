@@ -14,10 +14,14 @@ EXTENSIONS = ["ms-python.python", "ms-toolsai.jupyter"]
 
 
 class ColabCode:
-    def __init__(self, port=10000, password=None, authtoken=None, mount_drive=False):
+    def __init__(self, workspace, port=10000, password=None, authtoken=None, mount_drive=False, user_data_dir=None, extensions_dir=None):
+        self.workspace = workspace
         self.port = port
         self.password = password
         self.authtoken = authtoken
+        self.user_data_dir = user_data_dir
+        self.extensions_dir = extensions_dir
+
         self._mount = mount_drive
         self._install_code()
         self._install_extensions()
@@ -48,10 +52,23 @@ class ColabCode:
         os.system(f"fuser -n tcp -k {self.port}")
         if self._mount and colab_env:
             drive.mount("/content/drive")
+
+        prefix, options = [], [f"--port {self.port}", "--disable-telemetry"]
         if self.password:
-            code_cmd = f"PASSWORD={self.password} code-server --port {self.port} --disable-telemetry"
+            prefix.append(f"PASSWORD={self.password}")
         else:
-            code_cmd = f"code-server --port {self.port} --auth none --disable-telemetry"
+            options.append("--auth none")
+
+        if self.user_data_dir:
+            options.append(f"--user-data-dir {self.user_data_dir}")
+
+        if self.extensions_dir:
+            options.append(f"--extensions-dir {self.extensions_dir}")
+
+        options_str = " ".join(options)
+        code_cmd = f"{prefix} code-server {options_str} {self.workspace}"
+        print(code_cmd)
+
         with subprocess.Popen(
             [code_cmd],
             shell=True,
@@ -61,4 +78,3 @@ class ColabCode:
         ) as proc:
             for line in proc.stdout:
                 print(line, end="")
-
