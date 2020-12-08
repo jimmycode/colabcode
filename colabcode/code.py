@@ -65,8 +65,9 @@ class ColabCode:
         if self.extensions_dir:
             options.append(f"--extensions-dir {self.extensions_dir}")
 
+        prefix_str = " ".join(prefix)
         options_str = " ".join(options)
-        code_cmd = f"{prefix} code-server {options_str} {self.workspace}"
+        code_cmd = f"{prefix_str} code-server {options_str} {self.workspace}"
         print(code_cmd)
 
         with subprocess.Popen(
